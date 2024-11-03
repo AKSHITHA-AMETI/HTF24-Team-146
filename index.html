@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mood Journal - Login & Sign Up</title>
+    <link rel="stylesheet" href="sample.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .form-container, .calendar-container, .modal {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 16px;
+            background-color: white;
+            border-radius: 10px;
+            display: none; /* Initially hide forms and calendar */
+        }
+
+        .form-container h1, .calendar-container h1 {
+            text-align: center;
+        }
+
+        input[type=text], input[type=password] {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 14px 20px;
+            margin: 8px 0;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        button:hover {
+            opacity: 0.8;
+        }
+
+        .switch-btn {
+            background-color: #007bff;
+            color: white;
+            width: auto;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .calendar-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+
+        .day {
+            padding: 10px;
+            text-align: center;
+            background-color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            position: relative; /* For tooltip positioning */
+        }
+
+        .day:hover {
+            background-color: #e3f2fd;
+        }
+
+        .day.disabled {
+            background-color: #e0e0e0;
+            cursor: not-allowed;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 500px;
+            position: relative;
+            width: 90%;
+        }
+
+        .close {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            cursor: pointer;
+        }
+
+        .emoji-container {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+
+        .emoji-btn {
+            font-size: 24px;
+            padding: 10px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        .emoji-btn.selected {
+            background-color: #e3f2fd;
+        }
+
+        .entry {
+            margin-top: 10px;
+        }
+
+        .entry-date {
+            font-weight: bold;
+        }
+
+        .mood-display {
+            font-size: 16px;
+            margin-top: 5px;
+        }
+
+        .song-link {
+            margin-top: 10px;
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .song-link:hover {
+            text-decoration: underline;
+        }
+
+        .quote-display {
+            margin-top: 10px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container" id="loginForm">
+        <h1>Login</h1>
+        <label for="login-name">Name:</label>
+        <input type="text" id="login-name" placeholder="Enter Name" required>
+        <label for="login-password">Password:</label>
+        <input type="password" id="login-password" placeholder="Enter Password" required>
+        <button id="loginButton">Login</button>
+        <div class="switch-btn" id="switchToSignup">Don't have an account? Sign Up</div>
+    </div>
+
+    <div class="form-container" id="signupForm">
+        <h1>Sign Up</h1>
+        <label for="signup-name">Name:</label>
+        <input type="text" id="signup-name" placeholder="Enter Name" required>
+        <label for="signup-email">Email:</label>
+        <input type="text" id="signup-email" placeholder="Enter Email" required>
+        <label for="signup-password">Password:</label>
+        <input type="password" id="signup-password" placeholder="Enter Password" required>
+        <button id="signupButton">Sign Up</button>
+        <div class="switch-btn" id="switchToLogin">Already have an account? Login</div>
+    </div>
+
+    <div class="calendar-container" id="calendarContainer">
+        <div class="calendar-nav">
+            <button id="prevMonthButton">&lt; Prev Month</button>
+            <h3 id="currentMonth"></h3>
+            <button id="nextMonthButton">Next Month &gt;</button>
+        </div>
+        <div class="calendar" id="calendar"></div>
+    </div>
+
+    <div class="modal" id="entryModal">
+        <div class="modal-content">
+            <span class="close" id="closeModal">&times;</span>
+            <h2>Select Your Mood</h2>
+            
+            <div class="emoji-container">
+                <button class="emoji-btn" data-mood="😄">😄</button>
+                <button class="emoji-btn" data-mood="🙂">🙂</button>
+                <button class="emoji-btn" data-mood="😐">😐</button>
+                <button class="emoji-btn" data-mood="😢">😢</button>
+                <button class="emoji-btn" data-mood="😠">😠</button>
+                <button class="emoji-btn" data-mood="😖">😖</button>
+            </div>
+
+            <textarea id="journalText" placeholder="Write about your day..." rows="5" style="width: 100%;"></textarea>
+            <button id="saveEntry">Save Entry</button>
+        </div>
+    </div>
+
+    <div id="moodDisplay" class="entry" style="display: none;">
+        <h2>Your Mood Entry</h2>
+        <p class="entry-date" id="entryDate"></p>
+        <p class="mood-display" id="moodDisplayText"></p>
+        <a id="songLink" class="song-link" target="_blank"></a>
+        <p id="quoteDisplay" class="quote-display"></p>
+    </div>
+
+    <script>
+        // Show login form initially
+        document.getElementById('loginForm').style.display = 'block';
+
+        const loginForm = document.getElementById('loginForm');
+        const signupForm = document.getElementById('signupForm');
+        const switchToSignup = document.getElementById('switchToSignup');
+        const switchToLogin = document.getElementById('switchToLogin');
+        const calendarContainer = document.getElementById('calendarContainer');
+        const calendar = document.getElementById('calendar');
+        const currentMonthElement = document.getElementById('currentMonth');
+        const prevMonthButton = document.getElementById('prevMonthButton');
+        const nextMonthButton = document.getElementById('nextMonthButton');
+        const entryModal = document.getElementById('entryModal');
+        const closeModal = document.getElementById('closeModal');
+        const journalText = document.getElementById('journalText');
+        const saveEntry = document.getElementById('saveEntry');
+        const moodDisplay = document.getElementById('moodDisplay');
+        const entryDate = document.getElementById('entryDate');
+        const moodDisplayText = document.getElementById('moodDisplayText');
+        const songLink = document.getElementById('songLink');
+        const quoteDisplay = document.getElementById('quoteDisplay');
+
+        let selectedMood = null;
+        let selectedDate = null;
+        let currentDate = new Date(); // Track the current date
+        let userLoggedIn = false; // Track if a user is logged in
+
+        // Store entries for the selected date
+        const entries = {};
+
+        // Song links and quotes based on mood
+        const moodData = {
+            "😄": {
+                song: { name: "Vibe to match", url: "https://open.spotify.com/playlist/37i9dQZF1DX2UT3NuRgcHd?si=K89vLf3XSrOin5K71vv-Yg" },
+                quote: "Happiness is not something ready made. It comes from your own actions."
+            },
+            "🙂": {
+                song: { name: "Happy Songs", url: " https://open.spotify.com/playlist/0mKX1LScAfgWBl618Eevmu?si=07jfOUSuS4GO9mW2MN17Nw&pi=a-lezbuF8bROOe" },
+                quote: "The best way to cheer yourself is to try to cheer someone else up."
+            },
+            "😐": {
+                song: { name: "Mood Booster", url:" https://open.spotify.com/playlist/3rsCrvhCdHaJYBlmwr3Prm?si=2HLadjWnT1W_O5-9loyisg&pi=a-6fZ5jIMuQgat" },
+                quote: "The only way to do great work is to love what you do."
+            },
+            "😢": {
+                song: { name: "Refresh yourself", url: " https://open.spotify.com/playlist/37i9dQZF1DX2UT3NuRgcHd?si=K89vLf3XSrOin5K71vv-Yg" },
+                quote: "Tears are words the heart can't express."
+            },
+            "😠": {
+                song: { name: "Anger Management", url: " https://open.spotify.com/playlist/1omqR4qHb4SnSn61367Dch?si=T2yXBDP2RxywrXdaCZXMmw&pi=a-30J8qYDdRUuL" },
+                quote: "Anger is a short madness."
+            },
+            "😖": {
+                song: { name: "Calm and Relax", url: " https://open.spotify.com/playlist/2gSvtY04ZCXLT9nPrFMnUI?si=ivpl5vMnSMOQdPuRiRhN7g&pi=a-RhYOGhPHQ5um" },
+                quote: "It's not stress that kills us, it is our reaction to it."
+            }
+        };
+
+        // Event Listeners
+        document.getElementById('loginButton').addEventListener('click', function () {
+            const name = document.getElementById('login-name').value;
+            const password = document.getElementById('login-password').value;
+
+            // Simple login check (you can replace this with actual authentication)
+            if (name && password) {
+                userLoggedIn = true; // Set user logged in to true
+                showCalendar(); // Show the calendar after login
+            } else {
+                alert("Please enter valid credentials.");
+            }
+        });
+
+        document.getElementById('signupButton').addEventListener('click', function () {
+            const name = document.getElementById('signup-name').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+
+            // Simple signup check (you can replace this with actual signup logic)
+            if (name && email && password) {
+                alert("Signup successful! You can now log in.");
+                switchToLogin.click(); // Switch to login form after successful signup
+            } else {
+                alert("Please fill all fields.");
+            }
+        });
+
+        switchToSignup.addEventListener('click', function () {
+            loginForm.style.display = 'none';
+            signupForm.style.display = 'block';
+        });
+
+        switchToLogin.addEventListener('click', function () {
+            signupForm.style.display = 'none';
+            loginForm.style.display = 'block';
+        });
+
+        prevMonthButton.addEventListener('click', function () {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        });
+
+        nextMonthButton.addEventListener('click', function () {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        });
+
+        closeModal.addEventListener('click', function () {
+            entryModal.style.display = 'none';
+        });
+
+        saveEntry.addEventListener('click', function () {
+    const journalTextValue = journalText.value.trim();
+    if (!selectedMood) {
+        alert("Please select a mood.");
+        return;
+    }
+    if (!selectedDate) {
+        alert("Please select a date.");
+        return;
+    }
+    // Save the entry for the selected date
+    entries[selectedDate] = {
+        mood: selectedMood,
+        text: journalTextValue,
+        song: moodData[selectedMood].song,
+        quote: moodData[selectedMood].quote
+    };
+    // Display the saved entry
+    displayEntry(selectedDate);
+    entryModal.style.display = 'none';
+    selectedMood = null; // Reset the selected mood
+    journalText.value = ''; // Clear the journal text
+
+    // Check the checkbox for the saved entry
+    const checkboxes = document.querySelectorAll('.day input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+        if (checkbox.value === selectedDate) {
+            checkbox.checked = true; // Check the checkbox
+        }
+    });
+
+
+        });
+
+        document.querySelectorAll('.emoji-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                selectedMood = this.getAttribute('data-mood'); // Set the selected mood
+                document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+                this.classList.add('selected'); // Highlight selected emoji
+            });
+        });
+
+        // Render Calendar
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            currentMonthElement.textContent = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+            // Clear previous calendar
+            calendar.innerHTML = '';
+
+            // Get the first day of the month and the total days in the month
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const totalDays = lastDay.getDate();
+            const startDay = firstDay.getDay();
+
+            // Create empty boxes for days of the week before the first day of the month
+            for (let i = 0; i < startDay; i++) {
+                const emptyBox = document.createElement('div');
+                emptyBox.className = 'day disabled';
+                calendar.appendChild(emptyBox);
+            }
+
+            // Create day boxes
+            for (let day = 1; day <= totalDays; day++) {
+                const dayBox = document.createElement('div');
+                const dateValue = new Date(year, month, day);
+                dayBox.className = 'day';
+                dayBox.textContent = day;
+
+                // Disable future dates
+                if (dateValue > new Date()) {
+                    dayBox.classList.add('disabled');
+                } else {
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.value = `${month + 1}/${day}/${year}`; // Use mm/dd/yyyy format
+                    dayBox.appendChild(checkbox);
+
+                    dayBox.addEventListener('click', function () {
+                        if (userLoggedIn && dateValue <= new Date()) {
+                            selectedDate = checkbox.value; // Set the selected date
+                            entryModal.style.display = 'flex'; // Show entry modal on click if logged in
+                        }
+                    });
+                }
+
+                calendar.appendChild(dayBox);
+            }
+        }
+
+        // Display the saved entry
+        function displayEntry(date) {
+            const entry = entries[date];
+            if (entry) {
+                entryDate.textContent = date;
+                moodDisplayText.textContent = entry.mood;
+                songLink.href = entry.song.url;
+                songLink.textContent = entry.song.name;
+                quoteDisplay.textContent = entry.quote;
+                moodDisplay.style.display = 'block';
+            }
+        }
+
+        // Show calendar on initial load
+        function showCalendar() {
+            loginForm.style.display = 'none';
+            signupForm.style.display = 'none';
+            calendarContainer.style.display = 'block';
+            renderCalendar();
+        }
+    </script>
+</body>
+</html>
